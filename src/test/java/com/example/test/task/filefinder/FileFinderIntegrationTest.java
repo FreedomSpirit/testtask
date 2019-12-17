@@ -3,6 +3,8 @@ package com.example.test.task.filefinder;
 import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -14,12 +16,18 @@ class FileFinderIntegrationTest {
         String mask = "aa";
         File rootFile = new File(this.getClass().getClassLoader().getResource("test-folder").getFile());
 
-        FileFinder finder = new FileFinder();
-        List<File> results = finder.find(rootFile, depth, mask);
+        ConcurrentLinkedQueue<File> results = new ConcurrentLinkedQueue<File>();
+        FileFinderForTest finder = new FileFinderForTest();
+        finder.find(rootFile, depth, mask, results);
+        try {
+            finder.getWorker().join();
+        } catch (InterruptedException e) {
+            System.out.println(e.getMessage());
+        }
 
-        assertTrue(results.size() == 5);
-        results.stream().forEach(x -> assertTrue(x.getName().contains("aa")));
-        assertTrue(results.stream().filter(x -> x.getName().contains("aaa2")).count() == 0);
+        assertEquals(results.size(), 5);
+        results.forEach(x -> assertTrue(x.getName().contains("aa")));
+        assertTrue(results.stream().noneMatch(x -> x.getName().contains("aaa2")));
     }
 
     @Test
@@ -28,11 +36,25 @@ class FileFinderIntegrationTest {
         String mask = "bb";
         File rootFile = new File(this.getClass().getClassLoader().getResource("test-folder").getFile());
 
-        FileFinder finder = new FileFinder();
-        List<File> results = finder.find(rootFile, depth, mask);
+        ConcurrentLinkedQueue<File> results = new ConcurrentLinkedQueue<File>();
+        FileFinderForTest finder = new FileFinderForTest();
+        finder.find(rootFile, depth, mask, results);
+        try {
+            finder.getWorker().join();
+        } catch (InterruptedException e) {
+            System.out.println(e.getMessage());
+        }
 
-        assertTrue(results.size() == 6);
-        results.stream().forEach(x -> assertTrue(x.getName().contains("bb")));
+        assertEquals(results.size(), 6);
+        results.forEach(x -> assertTrue(x.getName().contains("bb")));
         assertTrue(results.stream().filter(x -> x.getName().contains("bbb2")).count() != 0);
+    }
+}
+
+
+
+class FileFinderForTest extends FileFinder{
+    public Thread getWorker(){
+        return super.worker;
     }
 }
