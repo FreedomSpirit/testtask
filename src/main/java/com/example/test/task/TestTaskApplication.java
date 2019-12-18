@@ -1,41 +1,34 @@
 package com.example.test.task;
 
-import com.example.test.task.filefinder.FileFinder;
-import com.example.test.task.filefinder.ResultsPrinter;
-
-import java.io.File;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import com.example.test.task.telnet.TelnetServer;
+import java.io.*;
 
 public class TestTaskApplication {
     public static void main (String args []) {
-        int depth = 0;
-        String mask;
+        int port = 23; //just to remember default telnet port
         File rootFile;
 
-        if (args.length != 3) {
-            System.err.println("Must be 3 arguments: rootPath depth mask");
+        if (args.length != 2) {
+            System.err.println("Must be 2 arguments: rootPath port");
             System.exit(1);
         }
 
         try {
-            depth = Integer.parseInt(args[1]);
+            port = Integer.parseInt(args[1]);
         } catch (NumberFormatException e) {
-            System.err.println("Argument depth (" + args[1] + ") must be an integer.");
+            System.err.println("Argument port (" + args[1] + ") must be an integer.");
             System.exit(1);
         }
         rootFile = new File(args[0]);
-        mask = args[2];
 
-        ConcurrentLinkedQueue<File> results = new ConcurrentLinkedQueue<File>();
-        FileFinder finder = new FileFinder();
-        finder.find(rootFile, depth, mask, results);
-
-        Thread printer = new Thread(new ResultsPrinter(results, System.out::println));
-        printer.start();
+        Thread server = new Thread(new TelnetServer(rootFile, port));
+        server.start();
         try {
-            printer.join();
+            server.join();
         } catch (InterruptedException e) {
-            System.out.println(e.getMessage());
+            System.out.println(e);
         }
+
+
     }
 }

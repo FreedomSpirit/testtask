@@ -18,14 +18,14 @@ class FileFinderIntegrationTest {
 
         ConcurrentLinkedQueue<File> results = new ConcurrentLinkedQueue<File>();
         FileFinderForTest finder = new FileFinderForTest();
-        finder.find(rootFile, depth, mask, results);
+        finder.find(rootFile, depth, mask, results, () -> {});
         try {
             finder.getWorker().join();
         } catch (InterruptedException e) {
             System.out.println(e.getMessage());
         }
 
-        assertEquals(results.size(), 5);
+        assertEquals(5, results.size());
         results.forEach(x -> assertTrue(x.getName().contains("aa")));
         assertTrue(results.stream().noneMatch(x -> x.getName().contains("aaa2")));
     }
@@ -38,14 +38,14 @@ class FileFinderIntegrationTest {
 
         ConcurrentLinkedQueue<File> results = new ConcurrentLinkedQueue<File>();
         FileFinderForTest finder = new FileFinderForTest();
-        finder.find(rootFile, depth, mask, results);
+        finder.find(rootFile, depth, mask, results, ()->{});
         try {
             finder.getWorker().join();
         } catch (InterruptedException e) {
             System.out.println(e.getMessage());
         }
 
-        assertEquals(results.size(), 6);
+        assertEquals(6, results.size());
         results.forEach(x -> assertTrue(x.getName().contains("bb")));
         assertTrue(results.stream().filter(x -> x.getName().contains("bbb2")).count() != 0);
     }
