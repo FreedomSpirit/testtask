@@ -5,6 +5,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -18,9 +19,14 @@ class FileFinderIntegrationTest {
 
         ConcurrentLinkedQueue<File> results = new ConcurrentLinkedQueue<File>();
         FileFinderForTest finder = new FileFinderForTest();
-        finder.find(rootFile, depth, mask, results, () -> {});
+
+        Waiter waiter = new Waiter();
+        Thread waiterThread = new Thread(waiter);
+        waiterThread.start();
+        finder.find(rootFile, depth, mask, results, waiter);
+
         try {
-            finder.getWorker().join();
+            waiterThread.join();
         } catch (InterruptedException e) {
             System.out.println(e.getMessage());
         }
@@ -38,9 +44,14 @@ class FileFinderIntegrationTest {
 
         ConcurrentLinkedQueue<File> results = new ConcurrentLinkedQueue<File>();
         FileFinderForTest finder = new FileFinderForTest();
-        finder.find(rootFile, depth, mask, results, ()->{});
+
+        Waiter waiter = new Waiter();
+        Thread waiterThread = new Thread(waiter);
+        waiterThread.start();
+        finder.find(rootFile, depth, mask, results, waiter);
+
         try {
-            finder.getWorker().join();
+            waiterThread.join();
         } catch (InterruptedException e) {
             System.out.println(e.getMessage());
         }
@@ -56,5 +67,26 @@ class FileFinderIntegrationTest {
 class FileFinderForTest extends FileFinder{
     public Thread getWorker(){
         return super.worker;
+    }
+}
+
+class Waiter implements Runnable, SimpleAction{
+    AtomicBoolean finished;
+
+    public Waiter() {
+        finished = new AtomicBoolean();
+        finished.set(false);
+    }
+
+    @Override
+    public void run() {
+        while(!finished.get()){
+            Thread.yield();
+        }
+    }
+
+    @Override
+    public void doAction() {
+        finished.set(true);
     }
 }

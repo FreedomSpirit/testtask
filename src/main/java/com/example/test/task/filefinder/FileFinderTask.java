@@ -2,6 +2,7 @@ package com.example.test.task.filefinder;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 public class FileFinderTask {
@@ -12,16 +13,17 @@ public class FileFinderTask {
     SimpleAction finishHandler;
 
     //Atomic is not required now, but may useful in future, in case subtask creation will be in separate thread
-    private AtomicBoolean hasSubtask = new AtomicBoolean();
+    private AtomicInteger subtaskCount;
 
     public FileFinderTask(File root, int depth, String mask,
-                          Consumer<File> fileHandler, SimpleAction finishHandler) {
+                          Consumer<File> fileHandler, SimpleAction finishHandler,
+                           AtomicInteger subtaskCounter) {
         this.depth = depth;
         this.mask = mask;
         this.root = root;
         this.fileHandler = fileHandler;
         this.finishHandler = finishHandler;
-        hasSubtask.set(false);
+        this.subtaskCount = subtaskCounter;
     }
 
     public File getRoot() {
@@ -39,13 +41,14 @@ public class FileFinderTask {
     }
 
     public FileFinderTask goDeep(File file){
-        hasSubtask.set(true);
-        return new FileFinderTask(file, depth-1, mask, fileHandler, finishHandler);
+        subtaskCount.getAndIncrement();
+        return new FileFinderTask(file, depth-1, mask, fileHandler, finishHandler, subtaskCount);
     }
 
     public void finish(){
-        if(!hasSubtask.get()){
-            System.out.println("task finished");
+        if(subtaskCount.get() > 0){
+            subtaskCount.getAndDecrement();
+        } else {
             finishHandler.doAction();
         }
     }

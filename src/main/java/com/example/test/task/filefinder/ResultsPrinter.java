@@ -27,11 +27,7 @@ public class ResultsPrinter implements Runnable{
             if(result != null){
                 printMethod.accept(result.toString());
             } else {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    System.out.println(e);
-                }
+                Thread.yield();
             }
         }
     }

@@ -50,11 +50,11 @@ public class TelnetConnection implements Runnable{
                             if(result != null){
                                 out.println(result);
                             } else {
-                                Thread.sleep(100);
+                                Thread.yield();
                             }
                         }
 
-                    } catch (SocketException | NumberFormatException | InterruptedException e) {
+                    } catch (SocketException | NumberFormatException e) {
                         out.println(e);
                         //TODO: add logger
                         e.printStackTrace();
